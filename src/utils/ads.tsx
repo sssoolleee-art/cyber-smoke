@@ -4,9 +4,9 @@ import { TossAds, loadFullScreenAd, showFullScreenAd } from '@apps-in-toss/web-f
 // ── Ad IDs ───────────────────────────────────────────────────────────────────
 // TODO: 앱인토스 콘솔에서 발급받은 실제 ID로 교체 필요
 export const AD_IDS = {
-  banner: 'cs-banner-1',
-  interstitial: 'cs-interstitial-1',
-  rewarded: 'cs-rewarded-1',
+  banner: 'ait.v2.live.b774adde663d4ac2',
+  interstitial: 'ait.v2.live.6a0a5836df854760',
+  rewarded: 'ait.v2.live.84cbcfd3536a4571',
 };
 
 // ── Banner Ad ─────────────────────────────────────────────────────────────────
