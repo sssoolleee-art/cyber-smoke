@@ -172,10 +172,10 @@ body {
 
 .ash-particle {
   position: absolute;
-  width: 3px;
-  height: 2px;
-  background: #C8C8C8;
-  border-radius: 1px;
+  width: 5px;
+  height: 3px;
+  background: #D0D0D0;
+  border-radius: 2px;
   pointer-events: none;
   animation: ashFall 0.9s ease-in forwards;
 }

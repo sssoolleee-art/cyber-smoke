@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { generateHapticFeedback } from '@apps-in-toss/web-bridge';
 import { showInterstitial } from '../utils/ads';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { generateSmokePuff } from '../utils/smokeEngine';
@@ -98,10 +99,8 @@ export default function Smoke({ navigate, params }: Props) {
     setInhaleTick(t => t + 1);
     setTimeout(() => setIsInhaling(false), 400);
 
-    // 진동
-    if (navigator.vibrate) {
-      navigator.vibrate(tapCount === 4 ? [30, 40, 60] : 40);
-    }
+    // 햅틱 (AIT 네이티브)
+    generateHapticFeedback({ type: tapCount === 4 ? 'basicMedium' : 'tap' }).catch(() => {});
 
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     let smokeX: number, smokeY: number;
@@ -283,8 +282,8 @@ export default function Smoke({ navigate, params }: Props) {
       {/* 배경 연기 분위기 */}
       <div style={s.smokeBg} />
 
-      {/* 흡입 vignette */}
-      {isInhaling && <div key={inhaleTick} className="vignette-flash" />}
+      {/* 흡입 vignette - key로 매 탭마다 animation 재시작 */}
+      {inhaleTick > 0 && <div key={inhaleTick} className="vignette-flash" />}
 
       {/* 재 낙하 파티클 */}
       {ashParticles.map(a => (

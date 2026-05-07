@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; }
+  body {
+    width: 600px;
+    height: 600px;
+    background: #1A1A2E;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<canvas id="c" width="600" height="600"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+// Background
+ctx.fillStyle = '#1A1A2E';
+ctx.fillRect(0, 0, 600, 600);
+
+// Subtle radial glow center
+const grd = ctx.createRadialGradient(300, 320, 30, 300, 320, 250);
+grd.addColorStop(0, 'rgba(255, 107, 53, 0.08)');
+grd.addColorStop(1, 'rgba(26, 26, 46, 0)');
+ctx.fillStyle = grd;
+ctx.fillRect(0, 0, 600, 600);
+
+// ── Smoke wisps ──────────────────────────────────────────────────
+function drawSmoke(x, y, r, alpha) {
+  const sg = ctx.createRadialGradient(x, y, 0, x, y, r);
+  sg.addColorStop(0, `rgba(200, 200, 200, ${alpha})`);
+  sg.addColorStop(1, 'rgba(200, 200, 200, 0)');
+  ctx.fillStyle = sg;
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 1.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+drawSmoke(285, 185, 38, 0.18);
+drawSmoke(305, 145, 28, 0.13);
+drawSmoke(268, 120, 20, 0.09);
+drawSmoke(315, 110, 16, 0.07);
+drawSmoke(295, 95,  14, 0.05);
+
+// ── Cigarette body ───────────────────────────────────────────────
+const cigX = 160;
+const cigY = 300;
+const cigW = 280;
+const cigH = 44;
+const cigR = 22; // corner radius
+
+// White paper part (left 75%)
+const paperEnd = cigX + cigW * 0.75;
+ctx.save();
+ctx.beginPath();
+roundRect(ctx, cigX, cigY - cigH / 2, paperEnd - cigX, cigH, [cigR, 0, 0, cigR]);
+ctx.closePath();
+const paperGrd = ctx.createLinearGradient(cigX, cigY - cigH/2, cigX, cigY + cigH/2);
+paperGrd.addColorStop(0, '#F0EDE8');
+paperGrd.addColorStop(0.5, '#FFFFFF');
+paperGrd.addColorStop(1, '#D8D4CE');
+ctx.fillStyle = paperGrd;
+ctx.fill();
+ctx.restore();
+
+// Filter (orange/tan right 25%)
+const filterStart = paperEnd;
+ctx.save();
+ctx.beginPath();
+roundRect(ctx, filterStart, cigY - cigH / 2, cigX + cigW - filterStart, cigH, [0, cigR, cigR, 0]);
+ctx.closePath();
+const filterGrd = ctx.createLinearGradient(filterStart, cigY - cigH/2, filterStart, cigY + cigH/2);
+filterGrd.addColorStop(0, '#D4874A');
+filterGrd.addColorStop(0.5, '#E8994F');
+filterGrd.addColorStop(1, '#C07840');
+ctx.fillStyle = filterGrd;
+ctx.fill();
+ctx.restore();
+
+// Filter line separator
+ctx.strokeStyle = '#B06830';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(filterStart, cigY - cigH / 2 + 3);
+ctx.lineTo(filterStart, cigY + cigH / 2 - 3);
+ctx.stroke();
+
+// Subtle paper lines
+ctx.strokeStyle = 'rgba(180, 175, 168, 0.4)';
+ctx.lineWidth = 1;
+for (let lx = cigX + 50; lx < paperEnd - 10; lx += 40) {
+  ctx.beginPath();
+  ctx.moveTo(lx, cigY - cigH / 2 + 6);
+  ctx.lineTo(lx, cigY + cigH / 2 - 6);
+  ctx.stroke();
+}
+
+// ── Ember tip ────────────────────────────────────────────────────
+const emberX = cigX - 1;
+const emberY = cigY;
+
+// Burnt tip (dark cone)
+ctx.save();
+ctx.beginPath();
+ctx.moveTo(emberX, emberY - cigH / 2 + 4);
+ctx.lineTo(emberX - 18, emberY);
+ctx.lineTo(emberX, emberY + cigH / 2 - 4);
+ctx.closePath();
+const ashGrd = ctx.createLinearGradient(emberX - 18, emberY, emberX, emberY);
+ashGrd.addColorStop(0, '#222');
+ashGrd.addColorStop(1, '#555');
+ctx.fillStyle = ashGrd;
+ctx.fill();
+ctx.restore();
+
+// Ember glow (layered)
+function drawGlow(x, y, r, color, alpha) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, color.replace(')', `, ${alpha})`).replace('rgb', 'rgba'));
+  g.addColorStop(1, color.replace(')', ', 0)').replace('rgb', 'rgba'));
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+drawGlow(emberX - 10, emberY, 55, 'rgb(255, 107, 53)', 0.25);
+drawGlow(emberX - 10, emberY, 32, 'rgb(255, 107, 53)', 0.45);
+drawGlow(emberX - 10, emberY, 16, 'rgb(255, 150, 80)', 0.75);
+drawGlow(emberX - 10, emberY, 8,  'rgb(255, 220, 100)', 1.0);
+
+// Hot core
+ctx.fillStyle = '#FFF0A0';
+ctx.beginPath();
+ctx.arc(emberX - 10, emberY, 4, 0, Math.PI * 2);
+ctx.fill();
+
+// ── Helper: roundRect ──────────────────────────────────────────
+function roundRect(ctx, x, y, w, h, radii) {
+  const [tl, tr, br, bl] = radii;
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
+  ctx.lineTo(x + w, y + h - br);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+  ctx.lineTo(x + bl, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
+  ctx.lineTo(x, y + tl);
+  ctx.quadraticCurveTo(x, y, x + tl, y);
+}
+</script>
+</body>
+</html>
