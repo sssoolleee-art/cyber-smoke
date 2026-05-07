@@ -133,6 +133,53 @@ body {
   white-space: nowrap;
 }
 
+/* ── 흡입 vignette ──────────────────────────────────────── */
+
+@keyframes vignetteFlash {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.vignette-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.82) 100%);
+  pointer-events: none;
+  animation: vignetteFlash 0.45s ease-out forwards;
+  z-index: 5;
+}
+
+/* ── 불씨 burst (탭 시) ──────────────────────────────────── */
+
+@keyframes emberBurst {
+  0%   { box-shadow: 0 0 4px 2px #FF4500; background: #FF4500; }
+  25%  { box-shadow: 0 0 28px 14px #FF6B35, 0 0 52px 26px rgba(255,100,0,0.35); background: #FFB347; }
+  100% { box-shadow: 0 0 4px 2px #FF4500; background: #FF4500; }
+}
+
+.ember.inhaling {
+  animation: emberBurst 0.4s ease-out forwards !important;
+}
+
+/* ── 담배 재 낙하 ────────────────────────────────────────── */
+
+@keyframes ashFall {
+  0%   { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0.85; }
+  60%  { opacity: 0.6; }
+  100% { transform: translateY(70px) rotate(200deg) translateX(var(--ash-drift, 0px)); opacity: 0; }
+}
+
+.ash-particle {
+  position: absolute;
+  width: 3px;
+  height: 2px;
+  background: #C8C8C8;
+  border-radius: 1px;
+  pointer-events: none;
+  animation: ashFall 0.9s ease-in forwards;
+}
+
 /* ── 반응형 모바일 최적화 ────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

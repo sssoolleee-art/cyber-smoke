@@ -33,6 +33,8 @@ export default function Smoke({ navigate, params }: Props) {
   const [tapCount, setTapCount] = useState(0);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isInhaling, setIsInhaling] = useState(false);
+  const [inhaleTick, setInhaleTick] = useState(0);
+  const [ashParticles, setAshParticles] = useState<{ id: number; x: number; y: number; drift: number }[]>([]);
   const [selectedMood, setSelectedMood] = useState<MoodId | null>(null);
   const [message, setMessage] = useState('');
   const [totalSmokes, setTotalSmokes] = useState(0);
@@ -41,11 +43,38 @@ export default function Smoke({ navigate, params }: Props) {
   const [newUnlocks, setNewUnlocks] = useState<CharacterId[]>([]);
 
   const particleIdRef = useRef(0);
+  const ashIdRef = useRef(0);
   const smokeStartTimeRef = useRef(0);
   const cigaretteRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const char = CHARACTERS.find(c => c.id === characterId);
   const smokeColor = char?.smokeColor ?? '#C8C8C8';
+
+  // 담배 끝에서 지속적으로 연기 생성
+  useEffect(() => {
+    if (phase !== 'smoking') return;
+    const interval = setInterval(() => {
+      if (cigaretteRef.current && containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const tipRect = cigaretteRef.current.getBoundingClientRect();
+        const sx = tipRect.right - containerRect.left;
+        const sy = tipRect.top + tipRect.height / 2 - containerRect.top;
+        const ambient = Array.from({ length: 1 + Math.floor(Math.random() * 2) }, () => ({
+          x: sx,
+          y: sy,
+          size: 6 + Math.random() * 10,
+          opacity: 0.1 + Math.random() * 0.15,
+          duration: 3 + Math.random() * 2,
+          delay: 0,
+          drift: (Math.random() - 0.3) * 50,
+          id: ++particleIdRef.current,
+        }));
+        setParticles(prev => [...prev.slice(-32), ...ambient]);
+      }
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [phase]);
 
   useEffect(() => {
     (async () => {
@@ -66,7 +95,13 @@ export default function Smoke({ navigate, params }: Props) {
     if (tapCount === 0) smokeStartTimeRef.current = Date.now();
 
     setIsInhaling(true);
-    setTimeout(() => setIsInhaling(false), 300);
+    setInhaleTick(t => t + 1);
+    setTimeout(() => setIsInhaling(false), 400);
+
+    // 진동
+    if (navigator.vibrate) {
+      navigator.vibrate(tapCount === 4 ? [30, 40, 60] : 40);
+    }
 
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     let smokeX: number, smokeY: number;
@@ -74,16 +109,29 @@ export default function Smoke({ navigate, params }: Props) {
       const tipRect = cigaretteRef.current.getBoundingClientRect();
       smokeX = tipRect.right - rect.left;
       smokeY = tipRect.top + tipRect.height / 2 - rect.top;
+
+      // 재 낙하 파티클
+      const ashX = tipRect.right - rect.left - 22;
+      const ashY = tipRect.bottom - rect.top;
+      const ashCount = 1 + Math.floor(Math.random() * 3);
+      const newAsh = Array.from({ length: ashCount }, () => ({
+        id: ++ashIdRef.current,
+        x: ashX + (Math.random() - 0.5) * 12,
+        y: ashY,
+        drift: (Math.random() - 0.4) * 35,
+      }));
+      setAshParticles(prev => [...prev.slice(-12), ...newAsh]);
     } else {
       smokeX = e.clientX - rect.left;
       smokeY = e.clientY - rect.top;
     }
 
-    const newParticles = generateSmokePuff(smokeX, smokeY).map(p => ({
-      ...p,
-      id: ++particleIdRef.current,
-    }));
-    setParticles(prev => [...prev.slice(-24), ...newParticles]);
+    // 마지막 탭은 연기 3배, 나머지는 2배
+    const isLastPuff = tapCount === 4;
+    const newParticles = Array.from({ length: isLastPuff ? 3 : 2 }, (_, i) =>
+      generateSmokePuff(smokeX + (Math.random() - 0.5) * (i * 6), smokeY)
+    ).flat().map(p => ({ ...p, id: ++particleIdRef.current }));
+    setParticles(prev => [...prev.slice(-36), ...newParticles]);
 
     const next = tapCount + 1;
     setTapCount(next);
@@ -228,11 +276,24 @@ export default function Smoke({ navigate, params }: Props) {
   // ── 흡연 화면 ────────────────────────────────────────────────────────────────
   return (
     <div
+      ref={containerRef}
       style={s.smokeContainer}
       onPointerDown={handleTap}
     >
       {/* 배경 연기 분위기 */}
       <div style={s.smokeBg} />
+
+      {/* 흡입 vignette */}
+      {isInhaling && <div key={inhaleTick} className="vignette-flash" />}
+
+      {/* 재 낙하 파티클 */}
+      {ashParticles.map(a => (
+        <div
+          key={a.id}
+          className="ash-particle"
+          style={{ left: a.x, top: a.y, '--ash-drift': `${a.drift}px` } as React.CSSProperties}
+        />
+      ))}
 
       {/* 연기 파티클 */}
       {particles.map(p => (
@@ -319,38 +380,41 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     flexShrink: 0,
-    marginBottom: 14,
+    marginBottom: 18,
+    transform: 'rotate(-8deg)',
+    transformOrigin: 'left center',
   },
   cigaretteFilter: {
-    width: 12,
-    height: 9,
+    width: 16,
+    height: 14,
     background: '#C4854A',
-    borderRadius: '2px 0 0 2px',
+    borderRadius: '3px 0 0 3px',
     flexShrink: 0,
   },
   cigaretteBody: {
-    height: 7,
+    height: 12,
     background: '#F0EDE8',
     transition: 'width 0.4s ease',
     flexShrink: 0,
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.4)',
   },
   cigaretteAsh: {
-    width: 6,
-    height: 7,
-    background: '#AAAAAA',
+    width: 8,
+    height: 12,
+    background: '#BBBBBB',
     borderRadius: '0 2px 2px 0',
     flexShrink: 0,
   },
   cigaretteEmber: {
-    width: 9,
-    height: 9,
+    width: 12,
+    height: 12,
     position: 'relative' as const,
     flexShrink: 0,
   },
   smokeBg: {
     position: 'absolute',
     inset: 0,
-    background: 'radial-gradient(ellipse at 30% 35%, rgba(200,200,200,0.05) 0%, transparent 55%), radial-gradient(ellipse at 70% 55%, rgba(180,180,180,0.04) 0%, transparent 50%)',
+    background: 'radial-gradient(ellipse at 35% 30%, rgba(200,200,200,0.10) 0%, transparent 50%), radial-gradient(ellipse at 65% 60%, rgba(180,180,180,0.08) 0%, transparent 45%)',
     pointerEvents: 'none',
   },
   bottomInfo: {
