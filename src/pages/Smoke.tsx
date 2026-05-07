@@ -42,6 +42,7 @@ export default function Smoke({ navigate, params }: Props) {
 
   const particleIdRef = useRef(0);
   const smokeStartTimeRef = useRef(0);
+  const cigaretteRef = useRef<HTMLDivElement>(null);
 
   const char = CHARACTERS.find(c => c.id === characterId);
   const smokeColor = char?.smokeColor ?? '#C8C8C8';
@@ -68,10 +69,17 @@ export default function Smoke({ navigate, params }: Props) {
     setTimeout(() => setIsInhaling(false), 300);
 
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    let smokeX: number, smokeY: number;
+    if (cigaretteRef.current) {
+      const tipRect = cigaretteRef.current.getBoundingClientRect();
+      smokeX = tipRect.right - rect.left;
+      smokeY = tipRect.top + tipRect.height / 2 - rect.top;
+    } else {
+      smokeX = e.clientX - rect.left;
+      smokeY = e.clientY - rect.top;
+    }
 
-    const newParticles = generateSmokePuff(x, y).map(p => ({
+    const newParticles = generateSmokePuff(smokeX, smokeY).map(p => ({
       ...p,
       id: ++particleIdRef.current,
     }));
@@ -223,6 +231,9 @@ export default function Smoke({ navigate, params }: Props) {
       style={s.smokeContainer}
       onPointerDown={handleTap}
     >
+      {/* 배경 연기 분위기 */}
+      <div style={s.smokeBg} />
+
       {/* 연기 파티클 */}
       {particles.map(p => (
         <div
@@ -250,11 +261,13 @@ export default function Smoke({ navigate, params }: Props) {
         >
           {char?.emoji ?? '🐸'}
         </div>
-        <div style={s.cigarette}>🚬</div>
-        <div
-          className={`ember ${isInhaling ? 'inhaling' : ''}`}
-          style={{ top: 2, right: -4 }}
-        />
+        {/* 줄어드는 커스텀 담배 */}
+        <div ref={cigaretteRef} style={s.cigaretteWrap}>
+          <div style={s.cigaretteFilter} />
+          <div style={{ ...s.cigaretteBody, width: Math.max(4, 60 - tapCount * 11) }} />
+          <div style={s.cigaretteAsh} />
+          <div className={`ember ${isInhaling ? 'inhaling' : ''}`} style={s.cigaretteEmber} />
+        </div>
       </div>
 
       {/* 하단 정보 */}
@@ -302,10 +315,43 @@ const s: Record<string, React.CSSProperties> = {
     display: 'block',
     position: 'relative',
   },
-  cigarette: {
-    fontSize: 28,
-    position: 'relative',
-    bottom: 4,
+  cigaretteWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    marginBottom: 14,
+  },
+  cigaretteFilter: {
+    width: 12,
+    height: 9,
+    background: '#C4854A',
+    borderRadius: '2px 0 0 2px',
+    flexShrink: 0,
+  },
+  cigaretteBody: {
+    height: 7,
+    background: '#F0EDE8',
+    transition: 'width 0.4s ease',
+    flexShrink: 0,
+  },
+  cigaretteAsh: {
+    width: 6,
+    height: 7,
+    background: '#AAAAAA',
+    borderRadius: '0 2px 2px 0',
+    flexShrink: 0,
+  },
+  cigaretteEmber: {
+    width: 9,
+    height: 9,
+    position: 'relative' as const,
+    flexShrink: 0,
+  },
+  smokeBg: {
+    position: 'absolute',
+    inset: 0,
+    background: 'radial-gradient(ellipse at 30% 35%, rgba(200,200,200,0.05) 0%, transparent 55%), radial-gradient(ellipse at 70% 55%, rgba(180,180,180,0.04) 0%, transparent 50%)',
+    pointerEvents: 'none',
   },
   bottomInfo: {
     position: 'absolute',

@@ -46,7 +46,10 @@ export default function Index({ navigate }: Props) {
 
       {/* 캐릭터 카드 */}
       <div style={s.card}>
-        <div style={s.charEmoji}>{char?.emoji ?? '🐸'}</div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 4 }}>
+          <div style={s.charEmoji}>{char?.emoji ?? '🐸'}</div>
+          <span style={{ fontSize: 32, lineHeight: 1, marginBottom: 10 }}>🚬</span>
+        </div>
         <p style={s.charName}>{char?.name ?? '흡연 개구리'}</p>
         <p style={s.statText}>
           오늘 {todaySmokes}번째 · 총 {totalSmokes.toLocaleString()}번째

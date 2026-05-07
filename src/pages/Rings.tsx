@@ -177,9 +177,10 @@ export default function Rings({ navigate }: Props) {
           width: 44,
           height: 44,
           borderRadius: '50%',
-          border: '3px solid #C8C8C8',
+          border: '3px solid rgba(210,210,210,0.85)',
           pointerEvents: 'none',
-          boxShadow: '0 0 8px rgba(200,200,200,0.4)',
+          boxShadow: '0 0 10px 3px rgba(200,200,200,0.45), inset 0 0 6px rgba(200,200,200,0.2)',
+          filter: 'blur(0.8px)',
         }} />
       )}
 
