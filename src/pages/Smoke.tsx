@@ -97,10 +97,36 @@ export default function Smoke({ navigate, params }: Props) {
 
     setIsInhaling(true);
     setInhaleTick(t => t + 1);
-    setTimeout(() => setIsInhaling(false), 400);
+    setTimeout(() => {
+      setIsInhaling(false);
+      // 내뱉기 연기 - 캐릭터 얼굴 앞에서 큰 puff
+      if (containerRef.current) {
+        const r = containerRef.current.getBoundingClientRect();
+        const ex = r.width / 2;
+        const ey = r.height * 0.65;
+        const exhale = Array.from({ length: 7 }, () => ({
+          x: ex + (Math.random() - 0.5) * 40,
+          y: ey,
+          size: 28 + Math.random() * 38,
+          opacity: 0.12 + Math.random() * 0.18,
+          duration: 2.2 + Math.random() * 1.5,
+          delay: Math.random() * 0.25,
+          drift: (Math.random() - 0.5) * 110,
+          id: ++particleIdRef.current,
+        }));
+        setParticles(prev => [...prev.slice(-44), ...exhale]);
+      }
+    }, 400);
 
-    // 햅틱 (AIT 네이티브)
-    generateHapticFeedback({ type: tapCount === 4 ? 'basicMedium' : 'tap' }).catch(() => {});
+    // 햅틱 - 들이마시기 + 내뱉기 2단계
+    const isLast = tapCount === 4;
+    generateHapticFeedback({ type: isLast ? 'softMedium' : 'tap' }).catch(() => {});
+    setTimeout(() => {
+      generateHapticFeedback({ type: isLast ? 'tickMedium' : 'tickWeak' }).catch(() => {});
+    }, 380);
+    if (isLast) {
+      setTimeout(() => generateHapticFeedback({ type: 'success' }).catch(() => {}), 800);
+    }
 
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     let smokeX: number, smokeY: number;
@@ -175,7 +201,7 @@ export default function Smoke({ navigate, params }: Props) {
     const s = await getItem<{ count: number; lastDate: string }>(STORAGE_KEYS.STREAK);
     setStreak(s?.count ?? 1);
 
-    setTimeout(() => setPhase('mood'), 800);
+    setTimeout(() => setPhase('mood'), 2200);
   }
 
   async function handleSave() {
@@ -282,6 +308,18 @@ export default function Smoke({ navigate, params }: Props) {
       {/* 배경 연기 분위기 */}
       <div style={s.smokeBg} />
 
+      {/* 배경 - 창문 */}
+      <div style={s.window}>
+        <div style={s.windowH} />
+        <div style={s.windowV} />
+        <div style={s.windowLight} />
+      </div>
+
+      {/* 배경 - 재떨이 */}
+      <div style={s.ashtray}>
+        <div style={s.ashtrayButt} />
+      </div>
+
       {/* 흡입 vignette - key로 매 탭마다 animation 재시작 */}
       {inhaleTick > 0 && <div key={inhaleTick} className="vignette-flash" />}
 
@@ -323,9 +361,17 @@ export default function Smoke({ navigate, params }: Props) {
         </div>
         {/* 줄어드는 커스텀 담배 */}
         <div ref={cigaretteRef} style={s.cigaretteWrap}>
+          {/* 필터 (갈색) */}
           <div style={s.cigaretteFilter} />
-          <div style={{ ...s.cigaretteBody, width: Math.max(4, 60 - tapCount * 11) }} />
-          <div style={s.cigaretteAsh} />
+          {/* 몸체 - 줄무늬 질감, 탭할수록 짧아짐 */}
+          <div style={{ ...s.cigaretteBody, width: Math.max(4, 78 - tapCount * 14) }} />
+          {/* 재 - tapCount에 따라 쌓이며 어두워짐 */}
+          <div style={{
+            ...s.cigaretteAsh,
+            width: 8 + tapCount * 4,
+            background: `rgb(${175 - tapCount * 15}, ${175 - tapCount * 15}, ${175 - tapCount * 15})`,
+          }} />
+          {/* 불씨 */}
           <div className={`ember ${isInhaling ? 'inhaling' : ''}`} style={s.cigaretteEmber} />
         </div>
       </div>
@@ -335,16 +381,14 @@ export default function Smoke({ navigate, params }: Props) {
         {tapCount === 0 && phase === 'smoking' && (
           <p style={s.hint}>탭해서 한 모금 💨</p>
         )}
-        {tapCount > 0 && tapCount < 5 && (
-          <p style={s.hint}>💨 {tapCount}/5</p>
-        )}
-        <p style={s.totalCount}>총 {totalSmokes.toLocaleString()}번째 한 모금</p>
+        <p style={s.totalCount}>총 {totalSmokes.toLocaleString()}번째</p>
       </div>
 
-      {/* 완료 오버레이 */}
+      {/* 완료 - 여운 오버레이 */}
       {phase === 'complete' && (
         <div style={s.completeOverlay}>
-          <p style={s.completeText}>✅ 한 대 완료!</p>
+          <div style={s.completeSmokeVeil} />
+          <p style={s.completeText}>✅ 한 대 완료</p>
         </div>
       )}
     </div>
@@ -392,17 +436,16 @@ const s: Record<string, React.CSSProperties> = {
   },
   cigaretteBody: {
     height: 12,
-    background: '#F0EDE8',
+    background: 'repeating-linear-gradient(90deg, #F0EDE8 0px, #F0EDE8 5px, #E5E2DC 5px, #E5E2DC 6px)',
     transition: 'width 0.4s ease',
     flexShrink: 0,
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.4)',
+    boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.5), inset 0 -1px 0 rgba(0,0,0,0.1)',
   },
   cigaretteAsh: {
-    width: 8,
     height: 12,
-    background: '#BBBBBB',
     borderRadius: '0 2px 2px 0',
     flexShrink: 0,
+    transition: 'width 0.4s ease, background 0.4s ease',
   },
   cigaretteEmber: {
     width: 12,
@@ -433,18 +476,82 @@ const s: Record<string, React.CSSProperties> = {
     color: '#4A4A6A',
     marginTop: 4,
   },
+  window: {
+    position: 'absolute',
+    top: '7%',
+    right: '8%',
+    width: 70,
+    height: 88,
+    border: '2.5px solid #252545',
+    borderRadius: 3,
+    background: 'linear-gradient(160deg, #060C18 0%, #0B1422 60%, #101E32 100%)',
+    overflow: 'hidden',
+  },
+  windowH: {
+    position: 'absolute',
+    top: '50%',
+    left: 0, right: 0,
+    height: 2,
+    background: '#252545',
+  },
+  windowV: {
+    position: 'absolute',
+    left: '50%',
+    top: 0, bottom: 0,
+    width: 2,
+    background: '#252545',
+  },
+  windowLight: {
+    position: 'absolute',
+    top: '20%',
+    left: '58%',
+    width: 5,
+    height: 5,
+    borderRadius: '50%',
+    background: '#FFD580',
+    boxShadow: '0 0 8px 4px rgba(255,210,100,0.22), -14px 10px 0 2px rgba(255,100,60,0.12)',
+  },
+  ashtray: {
+    position: 'absolute',
+    bottom: '30%',
+    left: '7%',
+    width: 46,
+    height: 14,
+    background: 'linear-gradient(180deg, #3A3A5A 0%, #23233A 100%)',
+    borderRadius: '2px 2px 7px 7px',
+    boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.3)',
+  },
+  ashtrayButt: {
+    position: 'absolute',
+    bottom: 3,
+    left: 7,
+    width: 16,
+    height: 3,
+    background: '#888',
+    borderRadius: 2,
+    transform: 'rotate(-8deg)',
+  },
   completeOverlay: {
     position: 'absolute',
-    top: '42%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    textAlign: 'center',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     pointerEvents: 'none',
   },
+  completeSmokeVeil: {
+    position: 'absolute',
+    inset: 0,
+    background: 'radial-gradient(ellipse at center, rgba(180,180,180,0.12) 0%, rgba(0,0,0,0.55) 100%)',
+    backdropFilter: 'blur(4px)',
+    animation: 'fadeIn 0.7s ease-out forwards',
+  },
   completeText: {
+    position: 'relative',
     fontSize: 28,
     fontWeight: 900,
     color: '#EAEAEA',
+    animation: 'fadeIn 0.6s ease-out 0.4s both',
   },
   // 무드 화면
   moodContainer: {

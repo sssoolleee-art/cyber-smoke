@@ -180,6 +180,13 @@ body {
   animation: ashFall 0.9s ease-in forwards;
 }
 
+/* ── 여운 페이드인 ───────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 /* ── 반응형 모바일 최적화 ────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
