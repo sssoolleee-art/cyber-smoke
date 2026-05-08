@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { IAP } from '@apps-in-toss/web-framework';
-import { showRewarded, BannerAd } from '../utils/ads';
+import { showInterstitial, BannerAd } from '../utils/ads';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { CHARACTERS, FREE_CHARACTERS, IAP_CHARACTERS } from '../data/characters';
 import type { CharacterId, UnlockCondition, NavigateFn } from '../types';
@@ -94,11 +94,9 @@ export default function Collection({ navigate }: Props) {
   }
 
   async function handlePreview(id: CharacterId) {
-    const rewarded = await showRewarded();
-    if (rewarded) {
-      setPreviewChar(id);
-      setTimeout(() => setPreviewChar(null), 3000);
-    }
+    await showInterstitial();
+    setPreviewChar(id);
+    setTimeout(() => setPreviewChar(null), 3000);
   }
 
   async function handleIapPurchase(sku: string, characterId?: CharacterId) {

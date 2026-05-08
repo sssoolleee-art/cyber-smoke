@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { showRewarded, BannerAd } from '../utils/ads';
+import { showInterstitial, BannerAd } from '../utils/ads';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { RING_GRADE_CONFIG } from '../utils/ringGame';
 import type { RingGrade, NavigateFn } from '../types';
@@ -45,8 +45,8 @@ export default function Result({ navigate, params }: Props) {
       await setItem(STORAGE_KEYS.RING_TODAY, { date: today, count });
       navigate('rings');
     } else {
-      const rewarded = await showRewarded();
-      if (rewarded) navigate('rings');
+      await showInterstitial();
+      navigate('rings');
     }
   }
 
