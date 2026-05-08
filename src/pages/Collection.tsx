@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { IAP } from '@apps-in-toss/web-framework';
 import { showRewarded, BannerAd } from '../utils/ads';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { CHARACTERS, FREE_CHARACTERS, IAP_CHARACTERS } from '../data/characters';
@@ -28,6 +29,13 @@ const IAP_PRICES: Record<string, string> = {
   cs_golden_pepe: '₩1,000',
   cs_neon_cat: '₩500',
   cs_hologram: '₩2,000',
+  cs_ad_remove: '₩1,900',
+};
+
+const SKU_TO_CHAR: Record<string, CharacterId> = {
+  cs_golden_pepe: 'golden_pepe',
+  cs_neon_cat: 'neon_cat',
+  cs_hologram: 'hologram',
 };
 
 export default function Collection({ navigate }: Props) {
@@ -35,6 +43,7 @@ export default function Collection({ navigate }: Props) {
   const [selectedChar, setSelectedChar] = useState<CharacterId>('pepe');
   const [previewChar, setPreviewChar] = useState<CharacterId | null>(null);
   const [adFree, setAdFree] = useState(false);
+  const [purchasing, setPurchasing] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -46,6 +55,33 @@ export default function Collection({ navigate }: Props) {
       setUnlocked(ul ?? ['pepe']);
       setSelectedChar(sel ?? 'pepe');
       setAdFree(adR === true);
+    })();
+  }, []);
+
+  // 구매 이력 복원 (재설치 시 대비)
+  useEffect(() => {
+    (async () => {
+      try {
+        const result = await IAP.getCompletedOrRefundedOrders();
+        const completedSkus = result?.orders
+          .filter(o => o.status === 'COMPLETED')
+          .map(o => o.sku) ?? [];
+
+        if (completedSkus.length === 0) return;
+
+        const current = await getItem<CharacterId[]>(STORAGE_KEYS.UNLOCKED_CHARACTERS) ?? ['pepe'];
+        const restoredChars = completedSkus
+          .map(sku => SKU_TO_CHAR[sku])
+          .filter((id): id is CharacterId => !!id);
+        const updated = [...new Set([...current, ...restoredChars])];
+        await setItem(STORAGE_KEYS.UNLOCKED_CHARACTERS, updated);
+        setUnlocked(updated);
+
+        if (completedSkus.includes('cs_ad_remove')) {
+          await setItem(STORAGE_KEYS.AD_REMOVE, true);
+          setAdFree(true);
+        }
+      } catch {}
     })();
   }, []);
 
@@ -61,6 +97,41 @@ export default function Collection({ navigate }: Props) {
       setPreviewChar(id);
       setTimeout(() => setPreviewChar(null), 3000);
     }
+  }
+
+  async function handleIapPurchase(sku: string, characterId?: CharacterId) {
+    if (purchasing) return;
+    setPurchasing(sku);
+
+    const cleanup = IAP.createOneTimePurchaseOrder({
+      options: {
+        sku,
+        processProductGrant: async () => {
+          try {
+            if (characterId) {
+              const current = await getItem<CharacterId[]>(STORAGE_KEYS.UNLOCKED_CHARACTERS) ?? ['pepe'];
+              const updated = [...new Set([...current, characterId])];
+              await setItem(STORAGE_KEYS.UNLOCKED_CHARACTERS, updated);
+              setUnlocked(updated);
+            } else if (sku === 'cs_ad_remove') {
+              await setItem(STORAGE_KEYS.AD_REMOVE, true);
+              setAdFree(true);
+            }
+            return true;
+          } catch {
+            return false;
+          }
+        },
+      },
+      onEvent: () => {
+        cleanup();
+        setPurchasing(null);
+      },
+      onError: () => {
+        cleanup();
+        setPurchasing(null);
+      },
+    });
   }
 
   const ownedFree = FREE_CHARACTERS.filter(c => unlocked.includes(c.id));
@@ -121,26 +192,45 @@ export default function Collection({ navigate }: Props) {
       )}
 
       {/* 프리미엄 */}
-      <p style={s.sectionLabel}>프리미엄</p>
+      <p style={s.sectionLabel}>프리미엄 캐릭터</p>
       <div style={{ ...s.grid, gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {IAP_CHARACTERS.map(c => {
           const owned = unlocked.includes(c.id);
           const cond = c.unlockCondition;
-          const price = cond.type === 'iap' ? IAP_PRICES[cond.productId] : '';
+          const sku = cond.type === 'iap' ? cond.productId : '';
+          const price = IAP_PRICES[sku] ?? '';
+          const isBuying = purchasing === sku;
           return (
-            <div key={c.id} style={{ ...s.charCard, ...s.premiumCard }}>
+            <div
+              key={c.id}
+              style={{ ...s.charCard, cursor: owned ? 'default' : 'pointer', opacity: isBuying ? 0.6 : 1 }}
+              onClick={() => !owned && !isBuying && handleIapPurchase(sku, c.id)}
+            >
               <div style={s.charEmoji}>{c.emoji}</div>
               <p style={s.charName}>{c.name}</p>
-              {!owned && (
-                <p style={s.priceTag}>{price}</p>
-              )}
-              {owned && (
+              {owned ? (
                 <p style={s.ownedTag}>보유</p>
+              ) : (
+                <p style={s.priceTag}>{isBuying ? '...' : price}</p>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* 광고 제거 */}
+      {!adFree && (
+        <div
+          style={{ ...s.charCard, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', opacity: purchasing === 'cs_ad_remove' ? 0.6 : 1 }}
+          onClick={() => !purchasing && handleIapPurchase('cs_ad_remove')}
+        >
+          <div>
+            <p style={{ ...s.charName, fontSize: 13, textAlign: 'left' }}>🚫 광고 영구 제거</p>
+            <p style={{ ...s.unlockHint, fontSize: 10, textAlign: 'left', marginTop: 2 }}>배너 광고를 완전히 없애요</p>
+          </div>
+          <p style={s.priceTag}>{purchasing === 'cs_ad_remove' ? '...' : IAP_PRICES['cs_ad_remove']}</p>
+        </div>
+      )}
 
       <button style={s.backBtn} onClick={() => navigate('index')}>
         ← 돌아가기
