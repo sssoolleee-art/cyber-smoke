@@ -188,7 +188,7 @@ export const CHARACTERS: CharacterConfig[] = [
     rarity: 'premium',
     smokeColor: '#FFD700',
     description: '황금빛 연기가 피어오른다.',
-    unlockCondition: { type: 'iap', productId: 'cs_golden_pepe' },
+    unlockCondition: { type: 'iap', productId: 'ait.0000030529.84af369e.fc72c24eb4.8207244019' },
   },
   {
     id: 'neon_cat',
@@ -197,7 +197,7 @@ export const CHARACTERS: CharacterConfig[] = [
     rarity: 'premium',
     smokeColor: '#FF1493',
     description: '무지개 연기를 뿜는 네온 고양이.',
-    unlockCondition: { type: 'iap', productId: 'cs_neon_cat' },
+    unlockCondition: { type: 'iap', productId: 'ait.0000030529.da396ebf.9293f53552.8207293321' },
   },
   {
     id: 'hologram',
@@ -206,7 +206,7 @@ export const CHARACTERS: CharacterConfig[] = [
     rarity: 'premium',
     smokeColor: '#E6E6FA',
     description: '홀로그램 연기. 미래에서 온 흡연러.',
-    unlockCondition: { type: 'iap', productId: 'cs_hologram' },
+    unlockCondition: { type: 'iap', productId: 'ait.0000030529.50c6483e.c220e41cea.8207334147' },
   },
 ];
 

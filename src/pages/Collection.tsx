@@ -26,17 +26,19 @@ function unlockLabel(cond: UnlockCondition): string {
 }
 
 const IAP_PRICES: Record<string, string> = {
-  cs_golden_pepe: '₩1,000',
-  cs_neon_cat: '₩500',
-  cs_hologram: '₩2,000',
-  cs_ad_remove: '₩1,900',
+  'ait.0000030529.84af369e.fc72c24eb4.8207244019': '₩1,089',
+  'ait.0000030529.da396ebf.9293f53552.8207293321': '₩506',
+  'ait.0000030529.50c6483e.c220e41cea.8207334147': '₩2,068',
+  'ait.0000030529.d0bd5054.d53c8a10a4.8207364849': '₩1,903',
 };
 
 const SKU_TO_CHAR: Record<string, CharacterId> = {
-  cs_golden_pepe: 'golden_pepe',
-  cs_neon_cat: 'neon_cat',
-  cs_hologram: 'hologram',
+  'ait.0000030529.84af369e.fc72c24eb4.8207244019': 'golden_pepe',
+  'ait.0000030529.da396ebf.9293f53552.8207293321': 'neon_cat',
+  'ait.0000030529.50c6483e.c220e41cea.8207334147': 'hologram',
 };
+
+const AD_REMOVE_SKU = 'ait.0000030529.d0bd5054.d53c8a10a4.8207364849';
 
 export default function Collection({ navigate }: Props) {
   const [unlocked, setUnlocked] = useState<CharacterId[]>(['pepe']);
@@ -77,7 +79,7 @@ export default function Collection({ navigate }: Props) {
         await setItem(STORAGE_KEYS.UNLOCKED_CHARACTERS, updated);
         setUnlocked(updated);
 
-        if (completedSkus.includes('cs_ad_remove')) {
+        if (completedSkus.includes(AD_REMOVE_SKU)) {
           await setItem(STORAGE_KEYS.AD_REMOVE, true);
           setAdFree(true);
         }
@@ -113,7 +115,7 @@ export default function Collection({ navigate }: Props) {
               const updated = [...new Set([...current, characterId])];
               await setItem(STORAGE_KEYS.UNLOCKED_CHARACTERS, updated);
               setUnlocked(updated);
-            } else if (sku === 'cs_ad_remove') {
+            } else if (sku === AD_REMOVE_SKU) {
               await setItem(STORAGE_KEYS.AD_REMOVE, true);
               setAdFree(true);
             }
@@ -221,14 +223,14 @@ export default function Collection({ navigate }: Props) {
       {/* 광고 제거 */}
       {!adFree && (
         <div
-          style={{ ...s.charCard, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', opacity: purchasing === 'cs_ad_remove' ? 0.6 : 1 }}
-          onClick={() => !purchasing && handleIapPurchase('cs_ad_remove')}
+          style={{ ...s.charCard, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', opacity: purchasing === AD_REMOVE_SKU ? 0.6 : 1 }}
+          onClick={() => !purchasing && handleIapPurchase(AD_REMOVE_SKU)}
         >
           <div>
             <p style={{ ...s.charName, fontSize: 13, textAlign: 'left' }}>🚫 광고 영구 제거</p>
             <p style={{ ...s.unlockHint, fontSize: 10, textAlign: 'left', marginTop: 2 }}>배너 광고를 완전히 없애요</p>
           </div>
-          <p style={s.priceTag}>{purchasing === 'cs_ad_remove' ? '...' : IAP_PRICES['cs_ad_remove']}</p>
+          <p style={s.priceTag}>{purchasing === AD_REMOVE_SKU ? '...' : IAP_PRICES[AD_REMOVE_SKU]}</p>
         </div>
       )}
 
