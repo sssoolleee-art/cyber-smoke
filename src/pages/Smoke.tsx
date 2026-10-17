@@ -8,6 +8,7 @@ import { checkAchievements } from '../utils/characters';
 import { CHARACTERS } from '../data/characters';
 import { MOOD_CONFIG, MOOD_IDS } from '../data/moods';
 import type { CharacterId, MoodId, MoodEntry, NavigateFn } from '../types';
+import { logGrowth } from '../utils/growth';
 
 interface Props {
   navigate: NavigateFn;
@@ -167,6 +168,7 @@ export default function Smoke({ navigate, params }: Props) {
   }, [phase, tapCount]);
 
   async function completeSmoke() {
+    logGrowth('smoke_complete');
     setPhase('complete');
 
     const newTotal = totalSmokes + 1;

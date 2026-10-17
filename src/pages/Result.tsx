@@ -3,6 +3,7 @@ import { showInterstitial, BannerAd } from '../utils/ads';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { RING_GRADE_CONFIG } from '../utils/ringGame';
 import type { RingGrade, NavigateFn } from '../types';
+import { SubsidyPromo } from '../utils/growth';
 
 interface Props {
   navigate: NavigateFn;
@@ -110,6 +111,7 @@ export default function Result({ navigate, params }: Props) {
         흡연장으로 돌아가기
       </button>
 
+      <SubsidyPromo from="cybersmoke" />
       {!adFree && (
         <div style={s.adArea}>
           <BannerAd />
