@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { generateHapticFeedback } from '@apps-in-toss/web-bridge';
+import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { showInterstitial } from '../utils/ads';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { generateSmokePuff } from '../utils/smokeEngine';
@@ -223,7 +223,6 @@ export default function Smoke({ navigate, params }: Props) {
   }
 
   async function handleSkip() {
-    await showInterstitial();
     navigate('index');
   }
 
@@ -289,7 +288,7 @@ export default function Smoke({ navigate, params }: Props) {
         </div>
 
         <button style={s.saveBtn} onClick={handleSave}>
-          기록하기
+          기록하기 (광고 후 이동)
         </button>
         <button style={s.skipBtn} onClick={handleSkip}>
           그냥 나가기

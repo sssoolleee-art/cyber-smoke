@@ -184,6 +184,7 @@ export default function Collection({ navigate }: Props) {
                   {previewChar === c.id ? c.emoji : '🔒'}
                 </div>
                 <p style={s.charName}>{c.name}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#999' }}>광고 보고 미리보기</p>
                 <p style={s.unlockHint}>{unlockLabel(c.unlockCondition)}</p>
               </div>
             ))}
@@ -233,7 +234,7 @@ export default function Collection({ navigate }: Props) {
       )}
 
       <button style={s.backBtn} onClick={() => navigate('index')}>
-        ← 돌아가기
+        흡연장으로
       </button>
 
       {!adFree && (

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { graniteEvent, closeView } from '@apps-in-toss/web-framework';
 import type { PageName, NavState } from './types';
 import Index from './pages/Index';
 import Smoke from './pages/Smoke';
@@ -13,6 +14,21 @@ export default function App() {
   const navigate = (page: PageName, params?: Record<string, unknown>) => {
     setNav({ page, params });
   };
+
+  // 내비게이션 바 뒤로가기: 흡연장(첫 화면)이면 미니앱 종료, 그 외 화면은 흡연장으로
+  const pageRef = useRef(nav.page);
+  pageRef.current = nav.page;
+  useEffect(() => {
+    try {
+      const cleanup = graniteEvent.addEventListener('backEvent', {
+        onEvent: () => {
+          if (pageRef.current === 'index') void closeView();
+          else setNav({ page: 'index' });
+        },
+      });
+      return () => { cleanup?.(); };
+    } catch { return undefined; }
+  }, []);
 
   const props = { navigate, params: nav.params ?? {} };
 

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { showInterstitial } from '../utils/ads';
 import { BannerAd } from '../utils/ads';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import {
@@ -112,7 +111,7 @@ export default function Rings({ navigate }: Props) {
     if (finalScore > prevBest) {
       await setItem(STORAGE_KEYS.RING_BEST_SCORE, finalScore);
     }
-    await showInterstitial();
+    // 게임이 끝나자마자 뜨는 전면광고는 예상하기 어려운 시점이라 노출하지 않음 (검수 정책)
     navigate('result', {
       score: finalScore,
       perfectCount,
