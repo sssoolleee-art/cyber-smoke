@@ -4,6 +4,7 @@ import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { RING_GRADE_CONFIG } from '../utils/ringGame';
 import type { RingGrade, NavigateFn } from '../types';
 import { SubsidyPromo } from '../utils/growth';
+import { FeedbackButton } from '../utils/feedback';
 
 interface Props {
   navigate: NavigateFn;
@@ -112,6 +113,7 @@ export default function Result({ navigate, params }: Props) {
       </button>
 
       <SubsidyPromo from="cybersmoke" />
+      <FeedbackButton app="cyber-smoke" />
       {!adFree && (
         <div style={s.adArea}>
           <BannerAd />
