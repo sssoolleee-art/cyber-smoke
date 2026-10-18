@@ -3,7 +3,7 @@ import { showInterstitial, BannerAd } from '../utils/ads';
 import { getItem, setItem, STORAGE_KEYS } from '../utils/storage';
 import { RING_GRADE_CONFIG } from '../utils/ringGame';
 import type { RingGrade, NavigateFn } from '../types';
-import { SubsidyPromo } from '../utils/growth';
+import { PushConsent, SubsidyPromo } from '../utils/growth';
 import { FeedbackButton } from '../utils/feedback';
 
 interface Props {
@@ -113,6 +113,7 @@ export default function Result({ navigate, params }: Props) {
       </button>
 
       <SubsidyPromo from="cybersmoke" />
+      <PushConsent templateCode="cyber-smoke-attendance" label="🔔 매일 오후 3시 출석 체크 알림 받기" storageKey="smoke_push_agreed" />
       <FeedbackButton app="cyber-smoke" />
       {!adFree && (
         <div style={s.adArea}>
