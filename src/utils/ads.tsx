@@ -44,10 +44,14 @@ export async function showInterstitial(): Promise<void> {
   lastInterstitialTime = now;
 
   return new Promise<void>((resolve) => {
+    // 8초 안에 준비 안 된 광고는 나중에 도착해도 띄우지 않음 ('예상하기 어려운 시점' 방지)
+    let lateGuard = false;
+    const lateTimer = setTimeout(() => { lateGuard = true; }, 8000);
     const cleanupLoad = loadFullScreenAd({
       options: { adGroupId: AD_IDS.interstitial },
       onEvent: (event) => {
-        if (event.type === 'loaded') {
+        if (event.type === 'loaded' && !lateGuard) {
+          clearTimeout(lateTimer);
           cleanupLoad();
           showFullScreenAd({
             options: { adGroupId: AD_IDS.interstitial },
@@ -72,11 +76,15 @@ export async function showRewarded(): Promise<boolean> {
   if (!loadFullScreenAd.isSupported() || !showFullScreenAd.isSupported()) return false;
 
   return new Promise<boolean>((resolve) => {
+    // 8초 안에 준비 안 된 광고는 나중에 도착해도 띄우지 않음 ('예상하기 어려운 시점' 방지)
+    let lateGuard = false;
+    const lateTimer = setTimeout(() => { lateGuard = true; }, 8000);
     let earned = false;
     const cleanupLoad = loadFullScreenAd({
       options: { adGroupId: AD_IDS.rewarded },
       onEvent: (event) => {
-        if (event.type === 'loaded') {
+        if (event.type === 'loaded' && !lateGuard) {
+          clearTimeout(lateTimer);
           cleanupLoad();
           showFullScreenAd({
             options: { adGroupId: AD_IDS.rewarded },
